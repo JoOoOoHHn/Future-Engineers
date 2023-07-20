@@ -1,3 +1,5 @@
+//FE July 19 7:40 am
+
 #pragma region VEXcode Generated Robot Configuration
 // Make sure all required headers are included.
 #include <stdio.h>
@@ -28,20 +30,22 @@ for (int iterator = 0; iterator < iterations; iterator++)
 
 // Robot configuration code.
 inertial BrainInertial = inertial();
-motor dMotor = motor(PORT3, true);
-sonar dL = sonar(PORT12);
-sonar dR = sonar(PORT7);
+motor dMotor = motor(PORT6, true);
+sonar dL = sonar(PORT2);
+sonar dR = sonar(PORT8);
 /*vex-vision-config:begin*/
-vision::signature sV__G = vision::signature (1, -7761, -5515, -6638,-5041, -3343, -4192,1.4, 0);
-vision::signature sV__R = vision::signature (2, 7835, 9063, 8448,235, 937, 586,3, 0);
+vision::signature sV__G = vision::signature (1, -7675, -5621, -6648,-4951, -3165, -4058,2, 0);
+vision::signature sV__R = vision::signature (2, 5745, 7073, 6410,-669, 473, -98,3.9, 0);
 vision::signature sV__B = vision::signature (3, 0, 0, 0,0, 0, 0,3, 0);
-vision sV = vision (PORT9, 65, sV__G, sV__R, sV__B);
+vision::signature sV__W = vision::signature (4, -3705, -3297, -3501,14927, 15999, 15463,7.4, 0);
+vision::signature sV__SIG_5 = vision::signature (5, 0, 0, 0,0, 0, 0,3, 0);
+vision sV = vision (PORT5, 65, sV__G, sV__R, sV__B, sV__W, sV__SIG_5);
 /*vex-vision-config:end*/
-distance dF = distance(PORT4);
+distance dF = distance(PORT9);
 motor LeftDriveSmart = motor(PORT1, 1, false);
-motor RightDriveSmart = motor(PORT2, 1, true);
+motor RightDriveSmart = motor(PORT7, 1, true);
 drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 250, 173, 76, mm, 1);
-touchled lCorner = touchled(PORT6);
+touchled lCorner = touchled(PORT11);
 #pragma endregion VEXcode Generated Robot Configuration
 
 // Include the IQ Library
@@ -60,6 +64,36 @@ double bl, br;
 bool ob = false; //obstacles true or false
 int corners = 0;
 int g = 0; //degrees to quorridors.
+char last_mark_color = ' ';
+
+int fix_g(int temp_d)
+{
+if ((side == 'l') && (g == 0))
+{
+temp_d = (temp_d > 270 ? temp_d = temp_d - 360 : temp_d);
+}
+else if ((side == 'r') && (g == 360))
+{
+temp_d = (temp_d < 90 ? temp_d = temp_d + 360: temp_d);
+}
+return temp_d;
+}
+
+void fix_direction (bool obj, int temp_d)
+{
+if ((temp_d > (g + 1))&&(corners >= 1))
+{
+lCorner.setColor(yellow);
+dMotor.spinToPosition(-15, degrees);
+}
+else if ((temp_d < (g - 1) ))//&&(corners >= 1))
+{
+lCorner.setColor(blue);
+dMotor.spinToPosition(15, degrees);
+}
+if (!obj)
+dMotor.spinToPosition(0, degrees);
+}
 
 class mark
 {
@@ -90,7 +124,6 @@ h = eh;
 s = h * w;
 c = ecolor;
 valid = true;
-
 }
 
 int size ()
@@ -98,23 +131,57 @@ int size ()
 return s;
 }
 
-char color()
+char get_color()
 {
 return c;
 }
 
-void navigate()
+char* get_color_w()
 {
-dMotor.spinToPosition((x > 160 ? -60 : 60) , degrees);
-Drivetrain.setDriveVelocity(15, percent);
-Drivetrain.drive(forward);
-while (f > 600)
-wait(0.1, seconds);
-dMotor.spinToPosition(0 , degrees);
-while (f < 200)
-wait (0.1, seconds);
+if (c == 'r')
+return "r";
+else
+return "g";
+}
+
+void navigate(char lmc)
+{
+Brain.Screen.clearLine(0);
+Brain.Screen.print("navegate");
+const int max_x = 320;
+const char c = get_color();
 Drivetrain.stop();
-wait(1000, seconds);
+if (c == 'r')
+sV.takeSnapshot(sV__R);
+else
+sV.takeSnapshot(sV__G);
+Drivetrain.setDriveVelocity(25, percent);
+wait(0.1, seconds);
+if (c != lmc) // if the last mark was the same color, keep moving forward in a line.
+while ((c == 'r' ? sV.largestObject.centerX > max_x * 0.25 : sV.largestObject.centerX < max_x * 0.75 ))
+{
+dMotor.spinToPosition((sV.largestObject.centerX > 160 ? (c == 'r' ? 60: -60) : (c == 'r' ? -60: 60)) , degrees);
+if (c == 'r')
+{
+dMotor.spinToPosition((sV.largestObject.centerX > max_x / 2 ? 60: 0), degrees);
+sV.takeSnapshot(sV__R);
+}
+else
+{
+dMotor.spinToPosition((sV.largestObject.centerX < max_x / 2 ? -60: 0), degrees);
+sV.takeSnapshot(sV__G);
+}
+wait(0.1, seconds);
+if (sV.objectCount == 0) break;
+}
+
+int temp_d = BrainInertial.heading(degrees);
+temp_d = fix_g (temp_d);
+fix_direction((sV.objectCount == 0? true: ob), temp_d);
+Drivetrain.drive(forward);
+wait (0.1, seconds);
+//Drivetrain.stop();
+
 if (!valid)
 return;
 }
@@ -126,6 +193,7 @@ mark get_objects()
 mark obj1 (0, 0);
 mark obj2 (0, 0);
 sV.takeSnapshot(sV__G);
+wait(0.1, seconds);
 //green
 if (sV.objectCount > 0) //there are green elements
 {
@@ -134,7 +202,8 @@ obj1.set( sV.largestObject.centerX, sV.largestObject.centerY, sV.largestObject.w
 
 //red
 sV.takeSnapshot(sV__R);
-if (sV.objectCount > 0) //there are green elements
+wait(0.1, seconds);
+if (sV.objectCount > 0) //there are red elements
 {
 obj2.set( sV.largestObject.centerX, sV.largestObject.centerY, sV.largestObject.width, sV.largestObject.height, 'r');
 }
@@ -144,22 +213,25 @@ return (obj1.size() > obj2.size()? obj1: obj2);
 
 bool obstacles_set ()
 {
-sV.takeSnapshot(sV__G);
-wait(0.1, seconds);
-if (sV.objectCount > 0) //there are green elements
+Brain.Screen.clearLine(0);
+Drivetrain.stop();
+sV.takeSnapshot(sV__R);
+wait(0.2, seconds);
+if (sV.objectCount > 0) //there are red elements
 {
-Brain.Screen.print("Obstacles : Green");
+Brain.Screen.print("Obstacles : R %d ", sV.objectCount);
 return true;
 }
 
-sV.takeSnapshot(sV__R);
-wait(0.1, seconds);
-if (sV.objectCount > 0) //there are red elements
+sV.takeSnapshot(sV__G);
+wait(0.2, seconds);
+if (sV.objectCount > 0) //there are green elements
 {
-Brain.Screen.print("Obstacles : Red");
+Brain.Screen.print("Obstacles : G %d ", sV.objectCount);
 return true;
 }
-return false;
+Brain.Screen.print("Obstacles : No ");
+return false; //no green or red blocks
 }
 
 int corner()
@@ -176,22 +248,35 @@ else if ((g == 360) && (side == 'r'))
 g = 0;
 while (abs (g - BrainInertial.heading(degrees)) < (corners == 1? 63 : 60))
 continue;
-// Drivetrain.stop();
 dMotor.spinToPosition(0, degrees);
 Drivetrain.setTurnVelocity(100, percent);
-
 lCorner.setColor(red);
+last_mark_color = ' ';
 return 0;
 }
+
+
+
 // "when started" hat block
 int fw () {
-if ((corners <= 1) && (ob == false)) //validate round type
+if ((corners <= 1))// && (ob == false)) //validate round type
+{
 ob = obstacles_set();
+}
 
 if (ob) //obstacles rounds
 {
+sV.takeSnapshot(sV__W);
+wait (0.1, seconds);
+while (sV.objectCount <= 0)//&&(dF.objectDistance(mm) > 1000))
+{
 mark n_mark = get_objects();
-n_mark.navigate();
+n_mark.navigate(last_mark_color);
+last_mark_color = n_mark.get_color();
+sV.takeSnapshot(sV__W); //check for wall
+wait (0.1, seconds);
+}
+
 }
 else //clean rounds
 {
@@ -201,34 +286,17 @@ wait (0.15, seconds);
 while (dF.objectDistance(mm) > (cd + (corners < 1? 0: dif)))
 {
 int temp_d = BrainInertial.heading(degrees);
-if (true) //corners > 1)
+temp_d = fix_g (temp_d); //check and fix the degrees by segments
+
+fix_direction(ob, temp_d); //move forward using the degrees set, to know where to move
+if (corners < 1)
 {
-if ((side == 'l') && (g == 0))
-{
-temp_d = (temp_d > 270 ? temp_d = temp_d - 360 : temp_d);
+if ((dL.distance(mm)> 800)||(dR.distance(mm)> 800))
+break;
 }
-else if ((side == 'r') && (g == 360))
-{
-temp_d = (temp_d < 90 ? temp_d = temp_d + 360: temp_d);
 }
 }
 
-if ((temp_d > (g + 1))&&(corners >= 1))
-{
-//Brain.playNote(4,5,250);
-lCorner.setColor(yellow);
-dMotor.spinToPosition(-15, degrees);
-dMotor.spinToPosition(0, degrees);
-}
-else if ((temp_d < (g - 1) ))//&&(corners >= 1))
-{
-//Brain.playNote(4,1,250);
-lCorner.setColor(blue);
-dMotor.spinToPosition(15, degrees);
-dMotor.spinToPosition(0, degrees);
-}
-}
-}
 if (corners < 1 )
 {
 Drivetrain.stop();
@@ -236,10 +304,10 @@ Drivetrain.stop();
 
 if (side == ' ')
 {
-if (dL.distance(mm)< 800) //|| (dR.distance(mm) > 800))
-side = 'r';
-else
+if (dL.distance(mm)> 800) //|| (dR.distance(mm) > 800))
 side = 'l';
+else
+side = 'r';
 }
 
 //next side degree set.
