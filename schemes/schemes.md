@@ -9,7 +9,7 @@ Directional component consisting of a motor connected to a gear that moves anoth
 
 ![WhatsApp Image 2023-07-25 at 5 10 46 PM (2)](https://github.com/JoOoOoHHn/Future-Engineers/assets/139586946/72700ba4-8c19-402a-b637-0653db38e22c)
 
-![WhatsApp Image 2023-07-18 at 5 18 59 PM](https://github.com/JoOoOoHHn/Future-Engineers/assets/139586946/656f046d-4882-4c9c-8564-09cf84df0157)\
+![WhatsApp Image 2023-07-18 at 5 18 59 PM](https://github.com/JoOoOoHHn/Future-Engineers/assets/139586946/656f046d-4882-4c9c-8564-09cf84df0157)
 
 The brain of the robot, responsible for connecting the programming to the physical model 
 
