@@ -1,4 +1,4 @@
-  Electromechanical diagrams 
+  # Electromechanical diagrams 
 
 
 Two-motor rear-wheel drive drivetrain configuration in charge of the robot's traction
