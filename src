@@ -55,7 +55,7 @@ int cd = 900; //corner distance
 double bl, br;
 bool ob = false; //obstacles true or false
 int corners = 0;
-int g = 0; //degrees to quorridors.
+int g = 0; //degrees to corridors.
 int cg = 0;
 char m_side, a_m_color;
 char clean_round = ' ';
