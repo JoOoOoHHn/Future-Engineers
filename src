@@ -1,46 +1,4 @@
-//FE August 20th 7:15 am
-
-#pragma region VEXcode Generated Robot Configuration
-// Make sure all required headers are included.
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
-#include <string.h>
-
-
-#include "vex.h"
-
-using namespace vex;
-
-// Brain should be defined by default
-brain Brain;
-
-
-// START IQ MACROS
-#define waitUntil(condition) \
-do { \
-wait(5, msec); \
-} while (!(condition))
-
-#define repeat(iterations) \
-for (int iterator = 0; iterator < iterations; iterator++)
-// END IQ MACROS
-
-
-// Robot configuration code.
-inertial BrainInertial = inertial();
-motor dMotor = motor(PORT6, true);
-sonar dL = sonar(PORT8);
-sonar dR = sonar(PORT2);
-distance dF = distance(PORT4);
-motor LeftDriveSmart = motor(PORT1, 1, false);
-motor RightDriveSmart = motor(PORT7, 1, true);
-drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 250, 173, 76, mm, 1);
-touchled l_ID = touchled(PORT11);
-colorsensor cL = colorsensor(PORT9);
-colorsensor cR = colorsensor(PORT3);
-#pragma endregion VEXcode Generated Robot Configuration
+//FE August 22th 8:30 pm
 
 // Include the IQ Library
 #include "vex.h"
@@ -52,12 +10,13 @@ using namespace vex;
 
 char side = ' ';
 int cd = 900; //corner distance
-double bl, br;
+double bl, br;  
 bool ob = false; //obstacles true or false
 int corners = 0;
 int g = 0; //degrees to corridors.
 int cg = 0;
 char m_side, a_m_color;
+int mx, my, ms;
 char clean_round = ' ';
 int temp_d;
 const int spSpeed = 10, qpSpeed = 75;
@@ -68,311 +27,315 @@ bool avoiding = false;
 bool rev_lap = false; //last lap in reverse.
 
 
+
+
+
+
 int fix_g(int temp_d)
 {
-if (g == 0)
-{
-temp_d = (temp_d > 270 ? temp_d = temp_d - 360 : temp_d);
-}
-else if (g == 360)
-{
-temp_d = (temp_d < 90 ? temp_d = temp_d + 360: temp_d);
-}
-return temp_d;
+  if (g == 0)
+    {
+    temp_d = (temp_d > 270 ? temp_d = temp_d - 360 : temp_d);
+    }
+  else if (g == 360)
+    {
+    temp_d = (temp_d < 90 ? temp_d = temp_d + 360: temp_d);
+    }
+  return temp_d;
 }
 
 void fix_direction (int temp_d)
 {
-if (temp_d > g + 1)
-{
-dMotor.spinToPosition(-10, degrees);
-}
-else if (temp_d < g - 1)
-{
-dMotor.spinToPosition(10, degrees);
-}
-dMotor.spinToPosition(0, degrees);
+  if (temp_d > g + 1)
+  {
+    dMotor.spinToPosition(-10, degrees);
+  }
+  else if (temp_d < g - 1)
+  {
+    dMotor.spinToPosition(10, degrees);
+  }
+  dMotor.spinToPosition(0, degrees);
 }
 
 int corner()
 {
-in_corner = true;
-if ((clean_round == 'f')||(clean_round == ' '))
-{
-cg = 80;
-Drivetrain.driveFor(reverse, 0.5, inches, true);
-}
-corners++;
-if ((corners == 9) && (a_m_color == 'r')) // reverse
-{
-l_ID.setColor(yellow_green);
-side = (side == 'l'? 'r': 'l');
-rev_lap = true; //last lap in reverse.
-Drivetrain.driveFor(forward, 3, inches);
-dMotor.spinToPosition(45, degrees, true);
-Drivetrain.driveFor(forward, 3, inches);
-dMotor.spinToPosition(-45, degrees, true);
-Drivetrain.driveFor(reverse, 3.6, inches);
-dMotor.spinToPosition(45, degrees, true);
-Drivetrain.driveFor(forward, 4, inches);
-dMotor.spinToPosition(0, degrees, true);
-}
-else
-{
-Brain.Screen.print (" %d ", corners);
-dMotor.spinToPosition ((side == 'l'? -59 : 59), degrees);
-Drivetrain.drive(forward);
-wait(0.3, seconds);
-if ((g == 0) && (side == 'l'))
-g = 360;
-else if ((g == 360) && (side == 'r'))
-g = 0;
-//cg-=7;
-//while (abs (g - BrainInertial.heading(degrees)) < cg);
+  in_corner = true;
+  if ((clean_round == 'f')||(clean_round == ' '))
+  {
+    cg = 80; 
+    Drivetrain.driveFor(reverse, 0.5, inches, true);
+  }
+  corners++;
+  if ((corners == 9) && (a_m_color == 'r')) // reverse
+    {
+      l_ID.setColor(yellow_green);
+      side = (side == 'l'? 'r': 'l');
+      rev_lap = true; //last lap in reverse.
+      Drivetrain.driveFor(forward, 3, inches);
+      dMotor.spinToPosition(45, degrees, true);
+      Drivetrain.driveFor(forward, 3, inches);
+      dMotor.spinToPosition(-45, degrees, true);
+      Drivetrain.driveFor(reverse, 3.6, inches);
+      dMotor.spinToPosition(45, degrees, true);
+      Drivetrain.driveFor(forward, 4, inches);
+       dMotor.spinToPosition(0, degrees, true);
+    }
+  else
+    {
+    Brain.Screen.print (" %d ", corners);
+    dMotor.spinToPosition ((side == 'l'? -59 : 59), degrees);
+    Drivetrain.drive(forward);
+    wait(0.3, seconds);
+    if ((g == 0) && (side == 'l'))
+      g = 360;
+    else if ((g == 360) && (side == 'r'))
+      g = 0;
+    //cg-=7;
+    //while (abs (g - BrainInertial.heading(degrees)) < cg);
 
-//if (clean_round == 't')
-while (abs (g - BrainInertial.heading(degrees)) < cg);
-//else
-//while (abs (g - fix_g(BrainInertial.heading(degrees))) < cg);
-dMotor.spinToPosition(0, degrees);
-a_m_color = ' ';
-wait(100, msec);
-
-}
-in_corner = false;
-return 0;
+    //if (clean_round == 't')
+      while (abs (g - BrainInertial.heading(degrees)) < cg);
+    //else
+      //while (abs (g - fix_g(BrainInertial.heading(degrees))) < cg);
+    dMotor.spinToPosition(0, degrees);
+    a_m_color = ' ';
+    wait(100, msec);
+ 
+    }
+  in_corner = false;
+  return 0;
 }
 
 
 void avoid_obstacles(char side)
 {
-Drivetrain.stop();
-avoiding = true;
-if (side == 'r')
-{
-l_ID.setColor(red);
-dMotor.spinToPosition(0, degrees);
-Drivetrain.driveFor(reverse,1.5, inches);
-dMotor.spinToPosition(55, degrees);
-Drivetrain.driveFor(forward, 2.4, inches);
-dMotor.spinToPosition(-55, degrees);
-Drivetrain.driveFor(forward, 4.7, inches);
-dMotor.spinToPosition(55, degrees);
-Drivetrain.driveFor(forward, 2.55, inches);
-dMotor.spinToPosition(0, degrees);
-}
-else if (side == 'l')
-{
-l_ID.setColor(green);
-dMotor.spinToPosition(0, degrees);
-Drivetrain.driveFor(reverse,1.5, inches);
-dMotor.spinToPosition(-55, degrees);
-Drivetrain.driveFor(forward, 2.4, inches);
-dMotor.spinToPosition(55, degrees);
-Drivetrain.driveFor(forward, 4.9, inches);
-dMotor.spinToPosition(-55, degrees);
-Drivetrain.driveFor(forward, 2.7, inches);
-dMotor.spinToPosition(0, degrees);
-}
-Drivetrain.driveFor(reverse, 3, inches, true);
-avoiding = false;
-}
-
-char get_color(int c) //
-{
-char tmp = ' ';
-if ((c > 300)||(c < 30))
-tmp = 'r';
-else if ((c > 60)&&(c < 180))
-tmp = 'g';
-else
-tmp = ' ';
-return tmp;
+  Drivetrain.stop();
+  avoiding = true;
+  if (side == 'r')
+    {
+    l_ID.setColor(red);
+    dMotor.spinToPosition(0, degrees);
+    Drivetrain.driveFor(reverse,1.5, inches); 
+    dMotor.spinToPosition(55, degrees);
+    Drivetrain.driveFor(forward, 2.4, inches);
+    dMotor.spinToPosition(-55, degrees);
+    Drivetrain.driveFor(forward, 4.7, inches);
+    dMotor.spinToPosition(55, degrees);
+    Drivetrain.driveFor(forward, 2.55, inches);
+    dMotor.spinToPosition(0, degrees);
+    }
+  else if (side == 'l')
+    {
+    l_ID.setColor(green);
+    dMotor.spinToPosition(0, degrees);
+    Drivetrain.driveFor(reverse,1.5, inches); 
+    dMotor.spinToPosition(-55, degrees);
+    Drivetrain.driveFor(forward, 2.4, inches);
+    dMotor.spinToPosition(55, degrees);
+    Drivetrain.driveFor(forward, 4.9, inches);
+    dMotor.spinToPosition(-55, degrees);
+    Drivetrain.driveFor(forward, 2.7, inches);
+    dMotor.spinToPosition(0, degrees);
+    }
+  Drivetrain.driveFor(reverse, 3, inches, true);    
+  avoiding = false;
 }
 
 // "when started" hat block
-int fw ()
+int fw () 
 {
-if (clean_round == 'f') //validate round type
-{
-while (((dL.distance(mm) < 600)&&(dR.distance(mm) < 600))||(dF.objectDistance(mm) > cd))
-{
-if (mark)
-{
-if (m_side == 'r' && a_m_color == 'r')
-{
-avoid_obstacles('r');
-}
-else if (m_side == 'l' && a_m_color == 'g')
-{
-avoid_obstacles('l');
-}
-else if (m_side == 'r' && a_m_color == 'g')
-{
-//aside_obstacles('l');
-avoid_obstacles('l');
-}
-else if (m_side == 'l' && a_m_color == 'r')
-{
-//aside_obstacles('r');
-avoid_obstacles('r');
-}
-}
-Drivetrain.drive(forward);
-int temp_d = BrainInertial.heading(degrees);
-temp_d = fix_g (temp_d); //check and fix the degrees by segments
+  if (clean_round == 'f') //validate round type
+  {
+        while (((dL.distance(mm) < 600)&&(dR.distance(mm) < 600))||(dF.objectDistance(mm) > cd))
+        {
+          if (mark)
+            {
+             if (m_side == 'r' && a_m_color == 'r')
+              {
+                avoid_obstacles('r');
+              }
+             else if (m_side == 'l' && a_m_color == 'g')
+              {
+                avoid_obstacles('l');
+              }
+             else if (m_side == 'r' && a_m_color == 'g')
+              {
+                //aside_obstacles('l');
+                avoid_obstacles('l');
+              }
+             else if (m_side == 'l' && a_m_color == 'r')
+              {
+                //aside_obstacles('r');
+                avoid_obstacles('r');
+              }
+            }
+          Drivetrain.drive(forward);  
+          int temp_d = BrainInertial.heading(degrees);
+          temp_d = fix_g (temp_d); //check and fix the degrees by segments
 
-fix_direction(temp_d); //move forward using the degrees set, to know where to move
-}
-}
+          fix_direction(temp_d); //move forward using the degrees set, to know where to move
+        }
+  }
 else if ((clean_round == 't' )||( clean_round == ' '))
-{
-if ((corners == 1)&&(clean_round == 't')) cg = 25;
-//else if ((clean_round == ' ')||(clean_round == 'f')) cd = 750;
+  {
+    if ((corners == 1)&&(clean_round == 't')) cg = 25;
+    //else if ((clean_round == ' ')||(clean_round == 'f')) cd = 750;
 
-while (!(dF.objectDistance(mm) < cd))
-{
-temp_d = BrainInertial.heading(degrees);
-temp_d = fix_g (temp_d); //check and fix the degrees by segments
-fix_direction(temp_d); //move forward using the degrees set, to know where to move
-if (clean_round == ' ')
-{
-if (mark)
-{
-l_ID.setColor(yellow);
-clean_round = 'f';
-fw();
-return 0;
-}
-}
-Drivetrain.drive(forward);
-if (clean_round == ' ') continue;
-else if (corners < 1)
-{
-if ((dL.distance(mm)> 800)||(dR.distance(mm)> 800))
-break;
-}
-}
-}
+    while (!(dF.objectDistance(mm) < cd))
+      {
+        temp_d = BrainInertial.heading(degrees);
+        temp_d = fix_g (temp_d); //check and fix the degrees by segments
+        fix_direction(temp_d); //move forward using the degrees set, to know where to move
+        if (clean_round == ' ')
+          {
+            if (mark)    
+            {
+              l_ID.setColor(yellow);
+              clean_round = 'f';
+              fw();
+              return 0;
+            }
+          }
+        Drivetrain.drive(forward);
+        if (clean_round == ' ') continue;
+        else if (corners < 1)
+          {
+          if ((dL.distance(mm)> 800)||(dR.distance(mm)> 800))
+            break;
+          }
+      }
+  }
 
-if (side == ' ')
-{
-if ((dL.distance(mm)> 800) || (dR.distance(mm) < 800))
-{
-side = 'l';
-if (clean_round == 't')
-cg = 37;
-}
-else
-{
-side = 'r';
-if (clean_round == 't')
-cg = 45;
-}
-}
+  if (side == ' ')
+  {
+    if ((dL.distance(mm)> 800) || (dR.distance(mm) < 800))
+      {
+        side = 'l';
+        if (clean_round == 't')
+          cg = 37;
+      }
+    else
+      {
+        side = 'r';
+        if (clean_round == 't')
+          cg = 45;
+      }
+  }
 
-//next side degree set.
-corner();
-if (clean_round == ' ' && corners >= 2)
-{
-cL.setLight(0, percent);
-cR.setLight(0, percent);
-clean_round = 't';
-cd = 1200;
-cg = 37;
-Drivetrain.setDriveVelocity(qpSpeed, percent);
-}
-g += (side == 'l'? -90: 90);
-g = (g >= 450? 90: (g <= -90? 270 : g));
-return 0;
+  //next side degree set.
+  corner();
+  if (clean_round == ' ' && corners >= 2)
+    {
+      clean_round = 't';
+      cd = 1200;
+      cg = 37;
+      Drivetrain.setDriveVelocity(qpSpeed, percent);
+     }
+  g += (side == 'l'? -90: 90);
+  g = (g >= 450? 90: (g <= -90? 270 : g));
+  return 0;
 }
 
 void monitor_color()
 {
-while(true)
-{
-lhue = cL.hue();
-rhue = cR.hue();
+  short t = 0;
+  char t1cl, t2cl;
+  int t1x, t2x, t1y, t2y; 
+  int t1a, t2a;
+  while(true)
+  {
+      sV.takeSnapshot(sV__G);
+      wait(0.1, seconds);
+      //green
+      if (sV.objectCount > 0) //there are green elements
+      {
+        t1cl = 'g';
+        t1x = sV.largestObject.centerX;
+        t1y = sV.largestObject.centerY;
+        t1a = sV.largestObject.width * sV.largestObject.height;
+      }
+      else
+        t1a = 0;
 
-if ((lhue > 300)||(lhue < 30)) //left red
-{
-//Drivetrain.stop();
-m_side = 'l';
-a_m_color = 'r';
-mark = true;
+      //red
+      sV.takeSnapshot(sV__R);
+      wait(0.1, seconds);
+      if (sV.objectCount > 0) //there are red elements
+      {
+        t2cl = 'r';
+        t2x = sV.largestObject.centerX;
+        t2y = sV.largestObject.centerY;
+        t2a = sV.largestObject.width * sV.largestObject.height;
+      }
+      else
+        t2a = 0;
+      if (t1a == t2a == 0)
+      {
 
-}
-else if ((rhue > 300)||(rhue < 30)) //right red
-{
-//Drivetrain.stop();
-m_side = 'r';
-a_m_color = 'r';
-mark = true;
+        mark = false;
+        continue;
+      }
 
-}
-else if ((lhue > 60)&&(lhue < 180)) //left green
-{
-//Drivetrain.stop();
-m_side = 'l';
-a_m_color = 'g';
-mark = true;
+      t = (t1a > t2a ? 1 : 2);
+      if (t == 1)
+      {
+        m_side = (t1x >= 158? 'r': 'l');
+        a_m_color = 'g';
+        mark = true;
+      }
+      else if (t == 2)
+      {
+        m_side = (t2x >= 158? 'r': 'l');
+        a_m_color = 'r';
+        mark = true;
+      }
+      else
+      {
+        wait(0.1, seconds);
+        mark = false;
+        l_ID.setColor(white);
+      }
+  if (avoiding || in_corner) continue;
+  else if (mark) 
+    Drivetrain.stop();
+  wait(0.1, seconds);
 
-}
-else if ((rhue > 60)&&(rhue < 180)) //right green
-{
-//Drivetrain.stop();
-m_side = 'r';
-a_m_color = 'g';
-mark = true;
-
-}
-else
-{
-wait(0.1, seconds);
-mark = false;
-l_ID.setColor(white);
-}
-if (avoiding || in_corner) continue;
-else if (mark)
-Drivetrain.stop();
-}
+  }
 }
 
 //1 inch = 13cm
 
-int main()
+int main() 
 {
-wait(0.1, seconds);
-Drivetrain.setDriveVelocity(spSpeed, percent);
-Drivetrain.setStopping(hold);
-cL.setLight(100, percent);
-cR.setLight(100, percent);
-
-dMotor.setVelocity(100, percent);
-dMotor.setStopping(hold);
+  wait(0.1, seconds);
+  Drivetrain.setDriveVelocity(spSpeed, percent);
+  Drivetrain.setStopping(hold);
 
 
-if ((dL.distance(mm) <= 350 ) || (dR.distance(mm) <= 350))
-{
-clean_round = 't';
-cL.setLight(0, percent);
-cR.setLight(0, percent);
-cd = 1000;
-Drivetrain.setDriveVelocity(qpSpeed, percent);
+  dMotor.setVelocity(100, percent);
+  dMotor.setStopping(hold);
+
+  if ((dL.distance(mm) <= 350 ) || (dR.distance(mm) <= 350))
+    {
+      clean_round = 't';
+      cd  = 1000;
+      Drivetrain.setDriveVelocity(qpSpeed, percent);
+    }
+  else
+    {
+    cd = 764;
+    thread myThColor   = thread(monitor_color);
+    wait (0.1, seconds);
+    }
+
+
+
+
+  while (corners <= (rev_lap ? 12: 11))
+    fw();
+  Drivetrain.driveFor(forward, 2, inches, true);
+  Drivetrain.stop();
+  
 }
-else
-{
-cd = 764;
-thread myThColor = thread(monitor_color);
-wait (0.1, seconds);
-}
 
 
-
-
-while (corners <= (rev_lap ? 12: 11))
-fw();
-Drivetrain.driveFor(forward, 2, inches, true);
-Drivetrain.stop();
-
-}
